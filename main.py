@@ -1,6 +1,7 @@
 # Copyright (C) @TheSmartBisnu
 # Channel: https://t.me/itsSmartDev
-
+from threading import Thread
+from http.server import HTTPServer, BaseHTTPRequestHandler
 import os
 import shutil
 import psutil
@@ -749,6 +750,19 @@ async def initialize():
 if __name__ == "__main__":
     try:
         LOGGER(__name__).info("Bot Started!")
+
+        # 启动健康检查 HTTP 服务（平台要求）
+        from http.server import HTTPServer, BaseHTTPRequestHandler
+        class HealthHandler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b"OK")
+        def run_health_server():
+            server = HTTPServer(('0.0.0.0', 8080), HealthHandler)
+            server.serve_forever()
+        Thread(target=run_health_server, daemon=True).start()
+
         asyncio.get_event_loop().run_until_complete(initialize())
         user.start()
         bot.run()
